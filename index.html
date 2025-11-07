@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Charan Tracker · Glow + Drag&Drop + Inline Add</title>
+  <title>Charan Tracker · Glow + Drag&Drop Only (Stable)</title>
   <style>
     :root{
       --bg1:#031a13;  --bg2:#061b2e;  --bg3:#04131f;
-      --card:#0a1422; --card2:#0b1220; --edge:#17324a;
+      --card:#0a1422; --edge:#17324a;
       --text:#dff4ff; --muted:#9dc2d9;
-      --accentG:#22c55e; --accentB:#08a0ff; --accentC:#06b6d4; --warn:#f59e0b; --danger:#ef4444;
+      --accentG:#22c55e; --accentB:#08a0ff; --accentC:#06b6d4;
       --shadow:0 10px 34px rgba(0,0,0,.55);
       --radius:18px;
       --glow: rgba(255, 245, 160, .22);
@@ -55,20 +55,17 @@
       border:1px solid var(--edge); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px}
 
     .add-bar{display:grid; grid-template-columns:1fr 130px 140px 150px auto; gap:10px; align-items:center}
-
     .input, select{
       background:#0a1a2c; color:var(--text); border:1px solid #1e3650; padding:12px 14px; border-radius:12px; outline:none;
       transition: transform .14s ease, box-shadow .14s ease, border-color .2s ease;
     }
     .input::placeholder{color:#7aa5be}
-    .input:hover, .input:focus, select:hover, select:focus{
-      transform:var(--lift); box-shadow:var(--lift-shadow); border-color:#2b5f86;
-    }
+    .input:hover, .input:focus, select:hover, select:focus{ transform:var(--lift); box-shadow:var(--lift-shadow); border-color:#2b5f86; }
 
     .btn{
       cursor:pointer; border:none; padding:12px 16px; border-radius:12px; font-weight:800; letter-spacing:.2px;
       background:linear-gradient(135deg,#19c37d,#0ea5e9); color:#def7ff; box-shadow:0 10px 24px rgba(14,165,233,.28);
-      transition:transform .12s ease, filter .2s, box-shadow .12s ease;
+      transition:transform .12s ease, box-shadow .12s ease, filter .2s;
     }
     .btn:hover, .btn:focus-visible{ transform:var(--lift); box-shadow:var(--lift-shadow) }
     .btn:active{transform:translateY(1px)}
@@ -78,7 +75,6 @@
       border:1px solid #1e3650; background:#0b1526; color:#cfeaff;
       padding:10px 14px; border-radius:999px; cursor:pointer; touch-action:manipulation;
       transition:transform .16s ease, box-shadow .16s ease, border-color .2s ease;
-      will-change: transform;
     }
     .chip:hover, .chip:focus-visible{ transform:var(--lift); box-shadow:var(--lift-shadow) }
     .chip.active{border-color:#19c37d; background:#0c1c30}
@@ -98,22 +94,22 @@
     .card h3::after{content:'↗'; font-size:12px; opacity:.6; transition:transform .2s ease, opacity .2s}
     .card:hover h3::after{transform:translateY(-4px); opacity:1}
 
-    .list{display:flex; flex-direction:column; gap:10px}
+    .list{display:flex; flex-direction:column; gap:10px; min-height:64px; padding-bottom:4px}
+    .list:empty::after{ content:"Drop here"; opacity:.6; font-size:12px; color:#9dc2d9; border:1px dashed #284a62; border-radius:10px; padding:8px 10px; display:inline-block; }
+    .list, .task { /* smooth hardware acceleration for transforms */
+      will-change: transform;
+    }
 
     .task{
-      display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center;
+      display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center;
       background:#0b1220; border:1px solid #1e3650; border-radius:14px; padding:12px;
-      position:relative; overflow:hidden; color:#e6f7ff; touch-action:none;
+      color:#e6f7ff; touch-action:none;
       transition: transform .14s ease, box-shadow .14s ease, border-color .2s ease;
     }
     .task:hover{ transform:var(--lift); box-shadow:var(--lift-shadow) }
-    .task.low{border-left:4px solid #19c37d}
-    .task.med{border-left:4px solid #0ea5e9}
+    .task.low{border-left:4px solid #22c55e}
+    .task.med{border-left:4px solid #06b6d4}
     .task.high{border-left:4px solid #f97316}
-
-    .check{appearance:none; width:24px; height:24px; border-radius:7px; border:2px solid #3d5a73; display:grid; place-items:center; cursor:pointer; transition:all .25s ease; background:transparent}
-    .check:checked{background:linear-gradient(135deg,#19c37d,#0ea5e9); border-color:transparent; box-shadow:0 6px 18px rgba(14,165,233,.25)}
-    .check:checked::after{content:"✓"; font-weight:900; color:#04121d}
 
     .title{font-weight:800; color:#e6f7ff; text-shadow:0 1px 2px rgba(0,0,0,.35)}
     .meta{font-size:12px; color:#a7cbe0}
@@ -129,7 +125,7 @@
     .bar{height:100%; width:0%; background:linear-gradient(90deg,#19c37d,#06b6d4,#0ea5e9); transition:width .45s ease}
     .stats{display:flex; align-items:center; gap:12px; color:#a7cbe0}
 
-    /* drag & drop helpers */
+    /* drag helpers */
     .card.drop-hover{outline:2px dashed #19c37d; outline-offset:4px}
     .task.dragging{opacity:.6; transform:scale(.98)}
     .drag-ghost{
@@ -137,20 +133,20 @@
       z-index:9999; opacity:.95; filter:drop-shadow(0 8px 18px rgba(0,0,0,.6));
     }
 
-    /* Inline adder */
+    .btn-lite{
+      border:1px dashed #2b4f6d; background:#0b1526; color:#cfeaff; padding:10px 12px; border-radius:12px; cursor:pointer;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .2s ease;
+      width:100%; text-align:center;
+    }
+    .btn-lite:hover, .btn-lite:focus-visible{ transform:var(--lift); box-shadow:var(--lift-shadow); border-color:#19c37d }
+
     .adder{
       background:#0b1526; border:1px dashed #2b4f6d; border-radius:12px; padding:10px; display:grid; gap:8px;
       grid-template-columns:1fr 120px 150px auto; align-items:center;
       transition: transform .12s ease, box-shadow .12s ease;
     }
     .adder:hover{ transform:var(--lift); box-shadow:var(--lift-shadow) }
-    .btn-lite{
-      border:1px dashed #2b4f6d; background:#0b1526; color:#cfeaff; padding:10px 12px; border-radius:12px; cursor:pointer;
-      transition: transform .12s ease, box-shadow .12s ease, border-color .2s ease;
-    }
-    .btn-lite:hover, .btn-lite:focus-visible{ transform:var(--lift); box-shadow:var(--lift-shadow); border-color:#19c37d }
 
-    /* Toast */
     .toast{
       position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(20px);
       background:#0b1526; border:1px solid #1e3650; color:#dff4ff;
@@ -165,8 +161,6 @@
       .add-bar input[type="date"]{order:4}
       .btn{order:5}
       .actions .icon-btn{padding:10px 12px}
-      .task{grid-template-columns:auto 1fr; gap:8px}
-      .actions{grid-column:1 / -1}
       .adder{grid-template-columns:1fr 1fr; grid-auto-rows:minmax(44px,auto)}
     }
   </style>
@@ -237,12 +231,15 @@
   <canvas id="confettiCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;"></canvas>
 
   <script>
+    // helpers
     const $ = (q,root=document)=>root.querySelector(q);
     const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
     const uid = ()=> Math.random().toString(36).slice(2,9);
     const STORAGE_KEY = 'charan.tracker.v2';
 
+    // keep a copy of the whole list, we only render filtered view
     const state = { tasks: loadTasks(), filter:'all', search:'' };
+    let draggingId = null; // desktop drag id fallback (some browsers clear dataTransfer on drop)
 
     function loadTasks(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }catch(e){ return [] } }
     function saveTasks(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tasks)); }
@@ -277,7 +274,7 @@
       const d = new Date();
       $('#todayText').textContent = d.toLocaleDateString(undefined,{weekday:'long', month:'short', day:'numeric', year:'numeric'});
 
-      setupDnD();
+      setupDesktopDnD();
       setupTouchDnD();
       wireInlineAdders();
     }
@@ -290,59 +287,59 @@
       // desktop drag
       li.setAttribute('draggable','true');
       li.addEventListener('dragstart', (e)=>{
+        draggingId = task.id; // fallback
         li.classList.add('dragging');
-        e.dataTransfer.setData('text/plain', task.id);
         e.dataTransfer.effectAllowed='move';
+        e.dataTransfer.setData('text/plain', task.id);
+        // use a cloned node as drag image for better feel
+        const img = li.cloneNode(true);
+        img.style.position='absolute'; img.style.top='-9999px'; img.style.left='-9999px';
+        document.body.appendChild(img);
+        e.dataTransfer.setDragImage(img, 10, 10);
+        setTimeout(()=> document.body.removeChild(img), 0);
       });
-      li.addEventListener('dragend', ()=> li.classList.remove('dragging'));
+      li.addEventListener('dragend', ()=>{ li.classList.remove('dragging'); draggingId=null; });
 
       li.innerHTML = `
-        <input class="check" type="checkbox" ${task.done?'checked':''} aria-label="Mark done">
         <div>
           <div class="title">${escapeHtml(task.title)}</div>
-          <div class="meta">${(task.done?'DONE':(task.bucket||'today').toUpperCase())}${task.priority? ' • '+task.priority.toUpperCase():''}${task.due? ' • Due: '+task.due:''}</div>
+          <div class="meta">${task.done?'DONE':(task.bucket||'today').toUpperCase()}${task.priority? ' • '+task.priority.toUpperCase():''}${task.due? ' • Due: '+task.due:''}</div>
         </div>
         <div class="actions">
           <button class="icon-btn" data-act="edit" aria-label="Edit">Edit</button>
-          <button class="icon-btn" data-act="move" aria-label="Move">Move</button>
           <button class="icon-btn" data-act="del" aria-label="Delete">Delete</button>
         </div>`;
 
-      li.querySelector('.check').addEventListener('change', e=>{
-        task.done = e.target.checked;
-        saveTasks(); render();
-        if (task.done) confettiBurst();
-        toast(task.done?'Great job! ✅':'Marked as not done');
-      });
-
-      li.querySelector('[data-act="del"]').addEventListener('click', ()=>{
+      // actions
+      li.querySelector('[data-act="del"]').addEventListener('click', (ev)=>{
+        ev.stopPropagation();
         state.tasks = state.tasks.filter(x=>x.id!==task.id); saveTasks(); render(); toast('Task deleted');
       });
-      li.querySelector('[data-act="edit"]').addEventListener('click', ()=>{
+      li.querySelector('[data-act="edit"]').addEventListener('click', (ev)=>{
+        ev.stopPropagation();
         const t = prompt('Edit task title', task.title);
         if(t!==null){ task.title=t.trim()||task.title; saveTasks(); render(); toast('Task updated'); }
       });
-      li.querySelector('[data-act="move"]').addEventListener('click', ()=>{
-        task.bucket = (task.bucket==='today')?'upcoming':'today'; task.done=false; saveTasks(); render(); toast('Task moved');
-      });
+
       return li;
     }
 
-    // HTML5 DnD for desktop
-    function setupDnD(){
+    // Desktop DnD
+    function setupDesktopDnD(){
       $$('.droptarget').forEach(z =>{
-        z.ondragover = (e)=>{ e.preventDefault(); z.closest('.card').classList.add('drop-hover'); e.dataTransfer.dropEffect='move'; };
+        z.ondragenter = (e)=>{ e.preventDefault(); z.closest('.card').classList.add('drop-hover'); };
+        z.ondragover  = (e)=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; z.closest('.card').classList.add('drop-hover'); };
         z.ondragleave = ()=> z.closest('.card').classList.remove('drop-hover');
         z.ondrop = (e)=>{
           e.preventDefault();
           z.closest('.card').classList.remove('drop-hover');
-          const id = e.dataTransfer.getData('text/plain');
-          assignDrop(id, z.id);
+          const id = e.dataTransfer.getData('text/plain') || draggingId;
+          if(id) assignDrop(id, z.id);
         };
       });
     }
 
-    // Pointer-based drag for touch/pen (mobile/tablet)
+    // Touch/Pen DnD
     let touchDragging = null, ghost = null, activePointerHost = null;
 
     function setupTouchDnD(){
@@ -353,8 +350,7 @@
 
     function startPointerDrag(e){
       if(!(e.pointerType==='touch' || e.pointerType==='pen')) return; // touch/pen only
-      const interactive = ['INPUT','BUTTON'];
-      if (interactive.includes(e.target.tagName)) return;
+      if (e.target.closest('button')) return; // ignore when starting on buttons
 
       const taskEl = e.currentTarget;
       activePointerHost = taskEl;
@@ -371,13 +367,15 @@
       highlightZoneAt(e.clientX, e.clientY);
 
       taskEl.setPointerCapture(e.pointerId);
-      taskEl.addEventListener('pointermove', onPointerMove);
+      taskEl.addEventListener('pointermove', onPointerMove, {passive:false});
       taskEl.addEventListener('pointerup', onPointerUp, {once:true});
       taskEl.addEventListener('pointercancel', onPointerCancel, {once:true});
     }
 
     function onPointerMove(e){
       if(!touchDragging || e.pointerId!==touchDragging.pointerId) return;
+      // prevent page from scrolling while dragging
+      e.preventDefault();
       touchDragging.lastX = e.clientX; touchDragging.lastY = e.clientY;
       positionGhost(e.clientX, e.clientY);
       highlightZoneAt(e.clientX, e.clientY);
@@ -397,9 +395,7 @@
       clearZoneHighlights();
       if(ghost){ ghost.remove(); ghost=null; }
       if(activePointerHost){
-        try{
-          activePointerHost.releasePointerCapture(touchDragging?.pointerId ?? 0);
-        }catch(_){}
+        try{ activePointerHost.releasePointerCapture(touchDragging?.pointerId ?? 0); }catch(_){}
         activePointerHost.removeEventListener('pointermove', onPointerMove);
         activePointerHost = null;
       }
@@ -428,16 +424,18 @@
       return el.closest('.droptarget');
     }
 
+    // apply drop
     function assignDrop(taskId, listId){
       const t = state.tasks.find(x=> x.id===taskId);
       if(!t) return;
 
-      if (listId === 'list-done') { t.done = true; confettiBurst(); toast('Completed! 🎉'); }
+      if (listId === 'list-done') { t.done = true; toast('Completed! 🎉'); confettiBurst(); }
       else if (listId === 'list-today') { t.done = false; t.bucket = 'today'; toast('Moved to Today'); }
       else if (listId === 'list-upcoming') { t.done = false; t.bucket = 'upcoming'; toast('Moved to Upcoming'); }
       saveTasks(); render();
     }
 
+    // top add
     function addTask(){
       const input = $('#taskInput'); const title = (input.value||'').trim();
       if(!title){ toast('Please enter a task'); input.focus(); return; }
@@ -446,14 +444,12 @@
       state.tasks.unshift(item); saveTasks(); input.value=''; render(); toast('Task added');
     }
 
-    // Inline adders at bottom of each column
+    // Inline adders
     function wireInlineAdders(){
       $$('.add-inline').forEach(btn=>{
         btn.onclick = ()=>{
           const section = btn.closest('section');
-          // remove any existing adder in this section
-          const exist = section.querySelector('.adder');
-          if(exist){ exist.remove(); }
+          const exist = section.querySelector('.adder'); if(exist) exist.remove();
           openInlineAdder(section, btn.dataset.bucket || 'today', btn);
         };
       });
@@ -476,18 +472,17 @@
         </div>
       `;
       anchorBtn.insertAdjacentElement('beforebegin', adder);
-      const titleEl = adder.querySelector('input[type="text"], input:not([type])') || adder.querySelector('input');
+      const titleEl = adder.querySelector('input');
       const priEl = adder.querySelector('select');
       const dueEl = adder.querySelector('input[type="date"]');
-      if(bucket==='today'||bucket==='upcoming'){ priEl.value='low'; }
-      if(bucket==='done'){ priEl.value='low'; }
 
       adder.querySelector('[data-act="cancel"]').onclick = ()=> adder.remove();
       adder.querySelector('[data-act="save"]').onclick = ()=>{
         const title = (titleEl.value||'').trim();
         if(!title){ toast('Please enter a task'); titleEl.focus(); return; }
         const item = {
-          id:uid(), title, priority:priEl.value, bucket:(bucket==='done'?'today':bucket),
+          id:uid(), title, priority:priEl.value,
+          bucket: (bucket==='done' ? 'today' : bucket),
           due: dueEl.value, done: bucket==='done', created:Date.now()
         };
         state.tasks.unshift(item); saveTasks(); render();
@@ -497,7 +492,7 @@
       titleEl && titleEl.focus();
     }
 
-    // Filters & search (floating chips)
+    // Filters & search
     $$('.chip').forEach(ch=> ch.addEventListener('click', ()=>{
       if(ch.id==='clearDone'){
         state.tasks = state.tasks.filter(t=>!t.done); saveTasks(); render(); toast('Cleared completed'); return;
@@ -513,7 +508,7 @@
     }));
     $('#search').addEventListener('input', e=>{ state.search = e.target.value.toLowerCase(); render(); });
 
-    // Add actions (top bar)
+    // Top add bar actions
     $('#addBtn').addEventListener('click', addTask);
     $('#taskInput').addEventListener('keydown', e=>{ if(e.key==='Enter') addTask(); });
 
@@ -521,6 +516,7 @@
     const toastEl = $('#toast'); let toastTimer;
     function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>toastEl.classList.remove('show'), 1600); }
 
+    // Escape HTML
     function escapeHtml(s){ return String(s).replace(/[&<>\"']/g, (ch)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#39;' }[ch])); }
 
     // Cursor glow follow
